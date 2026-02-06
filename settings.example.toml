@@ -1,0 +1,40 @@
+# ump settings
+# Place this file at: %APPDATA%/ump/settings.toml
+# Relative paths are resolved against the config directory.
+
+[soundfont]
+# Default soundfont loaded on startup
+# default_path = "soundfonts/GeneralUser.sf2"
+
+# Most recently used soundfont (auto-updated by the app)
+# recent_path = "C:/Users/you/Music/FluidR3_GM.sf2"
+
+[audio]
+# Application volume (0-100)
+volume = 80
+
+[font]
+# Custom font file (.ttf / .otf / .ttc)
+# Falls back to Consolas if not set or loading fails.
+# path = "C:/Windows/Fonts/msgothic.ttc"
+
+# Font size in points
+size = 14.0
+
+[window]
+# Window position and size in physical pixels (auto-saved on exit)
+# x = 100
+# y = 100
+# width = 1280
+# height = 720
+
+[display]
+# Show piano roll on startup
+show_piano_roll = true
+
+# Track view mode: "Default" (16-channel grid) or "Detail" (per-track tree)
+track_view_mode = "Default"
+
+[debug]
+# Enable verbose debug logging to file
+# verbose = true
