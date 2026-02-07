@@ -1,4 +1,5 @@
 //! DirectWrite text rendering: font setup, cell metrics measurement.
+#![cfg(feature = "d2d")]
 
 use std::collections::HashMap;
 

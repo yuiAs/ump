@@ -213,7 +213,7 @@ fn render_extended_track_list(renderer: &mut dyn Renderer, area: Rect, app: &App
         &|ch_idx: u8| {
             let v = cs.pitch_bend[ch_idx as usize].load(Ordering::Relaxed) as i32 as i16 as i32;
             if v == 0 {
-                " 0 ".to_string()
+                "  0".to_string()
             } else {
                 format!("{:>+3}", (v * 100 / 8192).clamp(-99, 99))
             }

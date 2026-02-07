@@ -1,8 +1,8 @@
 # ump
 
-A native GUI MIDI player for Windows with SF2 soundfont synthesis.
+A native GUI MIDI player with SF2 soundfont synthesis.
 
-Built with Rust, using Direct2D for hardware-accelerated rendering and a custom sequencer for low-latency audio playback.
+Built with Rust, using hardware-accelerated rendering (Direct2D or wgpu) and a custom sequencer for low-latency audio playback.
 
 ## Features
 
@@ -40,20 +40,33 @@ Built with Rust, using Direct2D for hardware-accelerated rendering and a custom 
 
 ## Build
 
+### Rendering Backend
+
+Two rendering backends are available, selected at compile time via Cargo feature flags:
+
+| Feature | Backend | Platform | Default |
+|---|---|---|---|
+| `d2d` | Direct2D / DirectWrite | Windows only | Yes (Windows) |
+| `wgpu-backend` | wgpu + glyphon | Cross-platform | -- |
+
+```sh
+# Windows (D2D, default)
+cargo build --release
+
+# Windows (wgpu)
+cargo build --release --no-default-features --features wgpu-backend
+
+# Linux / macOS (wgpu)
+cargo build --release --no-default-features --features wgpu-backend
+```
+
+> **Note:** Cargo does not support platform-conditional default features. On non-Windows platforms, you must explicitly specify `--no-default-features --features wgpu-backend`.
+
 ### Requirements
 
 - Rust 1.70+ (edition 2021)
-- Windows 10 or later (Direct2D / DirectWrite backend)
-
-### Commands
-
-```sh
-# Debug build
-cargo build
-
-# Release build (optimized, LTO enabled)
-cargo build --release
-```
+- **D2D backend:** Windows 10 or later
+- **wgpu backend:** Vulkan, Metal, or DX12 capable GPU
 
 ### Usage
 
@@ -70,13 +83,19 @@ ump path/to/file.mid --sf2 path/to/soundfont.sf2
 
 ## Configuration
 
-Settings are stored at `%APPDATA%/ump/settings.toml`. See [settings.example.toml](settings.example.toml) for all available options.
+Settings are stored at the platform config directory. See [settings.example.toml](settings.example.toml) for all available options.
 
-Relative paths in `settings.toml` are resolved against the config directory (`%APPDATA%/ump/`).
+| Platform | Path |
+|---|---|
+| Windows | `%APPDATA%/ump/settings.toml` |
+| Linux | `~/.config/ump/settings.toml` |
+| macOS | `~/Library/Application Support/ump/settings.toml` |
+
+Relative paths in `settings.toml` are resolved against the config directory.
 
 ## Limitations
 
-- **Windows only** -- Rendering depends on Direct2D/DirectWrite. No Linux/macOS support.
+- **Linux/macOS support is experimental** -- The wgpu backend is functional but less tested than the D2D backend on Windows.
 - **SysEx support is partial** -- GM/GS/XG/GM2 reset messages and Master Volume are recognized. Other SysEx commands (e.g. GS part parameters, XG effect settings, drum map changes) are parsed but not reproduced by the synthesizer.
 - **No MIDI output** -- Playback is software-synthesized only. External MIDI device output is not supported.
 - **Single soundfont** -- Only one SF2 file can be loaded at a time. Layering multiple soundfonts is not supported.
@@ -90,7 +109,9 @@ Relative paths in `settings.toml` are resolved against the config directory (`%A
 | [rustysynth](https://crates.io/crates/rustysynth) | SF2 soundfont synthesizer |
 | [cpal](https://crates.io/crates/cpal) | Cross-platform audio output |
 | [winit](https://crates.io/crates/winit) | Window creation and event loop |
-| [windows](https://crates.io/crates/windows) | Direct2D / DirectWrite rendering |
+| [windows](https://crates.io/crates/windows) | Direct2D / DirectWrite rendering (d2d feature) |
+| [wgpu](https://crates.io/crates/wgpu) | Cross-platform GPU rendering (wgpu-backend feature) |
+| [glyphon](https://crates.io/crates/glyphon) | Text rendering for wgpu (wgpu-backend feature) |
 | [clap](https://crates.io/crates/clap) | Command-line argument parsing |
 | [anyhow](https://crates.io/crates/anyhow) | Error handling |
 | [serde](https://crates.io/crates/serde) / [toml](https://crates.io/crates/toml) | Settings serialization |

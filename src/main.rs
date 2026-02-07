@@ -19,6 +19,7 @@ use winit::application::ApplicationHandler;
 use winit::event::{StartCause, WindowEvent};
 use winit::event_loop::{ActiveEventLoop, ControlFlow, EventLoop};
 use winit::keyboard::ModifiersState;
+#[cfg(feature = "d2d")]
 use winit::raw_window_handle::{HasWindowHandle, RawWindowHandle};
 use winit::window::{Window, WindowId};
 
@@ -26,7 +27,10 @@ use crate::app::{App, AppScreen};
 use crate::cli::Args;
 use crate::config::Config;
 use crate::midi::parser::parse_midi;
+#[cfg(feature = "d2d")]
 use crate::renderer::d2d::D2DRenderer;
+#[cfg(feature = "wgpu-backend")]
+use crate::renderer::wgpu_backend::WgpuRenderer;
 use crate::renderer::types::BG_COLOR;
 use crate::renderer::Renderer;
 use crate::sequencer::Sequencer;
@@ -44,7 +48,10 @@ const FRAME_IDLE: Duration = Duration::from_millis(200);
 
 struct UmpApp {
     window: Option<Arc<Window>>,
+    #[cfg(feature = "d2d")]
     renderer: Option<D2DRenderer>,
+    #[cfg(feature = "wgpu-backend")]
+    renderer: Option<WgpuRenderer>,
     app: Option<App>,
     config: Config,
     args: Args,
@@ -245,35 +252,50 @@ impl ApplicationHandler for UmpApp {
             }
         };
 
-        let hwnd = match window.window_handle() {
-            Ok(handle) => match handle.as_raw() {
-                RawWindowHandle::Win32(h) => {
-                    windows::Win32::Foundation::HWND(h.hwnd.get() as *mut _)
-                }
-                _ => {
-                    log_error!("Unsupported window handle");
+        let size = window.inner_size();
+        let font_path = self.config.font.path.as_deref().map(crate::config::resolve_path);
+        let font_size = self.config.font.size_or_default();
+
+        #[cfg(feature = "d2d")]
+        {
+            let font_family = self.config.font.family();
+            let hwnd = match window.window_handle() {
+                Ok(handle) => match handle.as_raw() {
+                    RawWindowHandle::Win32(h) => {
+                        windows::Win32::Foundation::HWND(h.hwnd.get() as *mut _)
+                    }
+                    _ => {
+                        log_error!("Unsupported window handle");
+                        event_loop.exit();
+                        return;
+                    }
+                },
+                Err(e) => {
+                    log_error!("Failed to get window handle: {}", e);
                     event_loop.exit();
                     return;
                 }
-            },
-            Err(e) => {
-                log_error!("Failed to get window handle: {}", e);
-                event_loop.exit();
-                return;
+            };
+
+            match D2DRenderer::new(hwnd, size.width, size.height, font_path.as_deref(), font_family, font_size) {
+                Ok(renderer) => self.renderer = Some(renderer),
+                Err(e) => {
+                    log_error!("Failed to create D2D renderer: {}", e);
+                    event_loop.exit();
+                    return;
+                }
             }
-        };
+        }
 
-        let size = window.inner_size();
-        let font_path = self.config.font.path.as_deref().map(crate::config::resolve_path);
-        let font_family = self.config.font.family();
-        let font_size = self.config.font.size_or_default();
-
-        match D2DRenderer::new(hwnd, size.width, size.height, font_path.as_deref(), font_family, font_size) {
-            Ok(renderer) => self.renderer = Some(renderer),
-            Err(e) => {
-                log_error!("Failed to create D2D renderer: {}", e);
-                event_loop.exit();
-                return;
+        #[cfg(feature = "wgpu-backend")]
+        {
+            match WgpuRenderer::new(window.clone(), size.width, size.height, font_path.as_deref(), font_size) {
+                Ok(renderer) => self.renderer = Some(renderer),
+                Err(e) => {
+                    log_error!("Failed to create wgpu renderer: {}", e);
+                    event_loop.exit();
+                    return;
+                }
             }
         }
 

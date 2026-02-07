@@ -1,4 +1,5 @@
 //! COM initialization and D2D factory creation.
+#![cfg(feature = "d2d")]
 
 use windows::Win32::Graphics::Direct2D::{
     D2D1CreateFactory, D2D1_FACTORY_TYPE_SINGLE_THREADED, ID2D1Factory,

@@ -1,4 +1,5 @@
 //! Direct2D renderer backend for Windows.
+#![cfg(feature = "d2d")]
 
 pub mod com;
 pub mod text;

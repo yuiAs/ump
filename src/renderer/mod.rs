@@ -1,6 +1,11 @@
 //! Renderer trait abstraction and supporting types.
 
+#[cfg(feature = "d2d")]
 pub mod d2d;
+
+#[cfg(feature = "wgpu-backend")]
+pub mod wgpu_backend;
+
 pub mod types;
 
 use crate::renderer::types::Color;
@@ -8,7 +13,7 @@ use crate::renderer::types::Color;
 /// Rendering error type.
 #[derive(Debug)]
 pub enum RenderError {
-    /// D2D device lost — render target must be recreated.
+    /// Device lost — render target must be recreated.
     DeviceLost,
     /// Platform-specific error.
     PlatformError(String),
@@ -17,7 +22,7 @@ pub enum RenderError {
 impl std::fmt::Display for RenderError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            RenderError::DeviceLost => write!(f, "D2D device lost"),
+            RenderError::DeviceLost => write!(f, "Device lost"),
             RenderError::PlatformError(msg) => write!(f, "Platform error: {}", msg),
         }
     }
@@ -27,7 +32,7 @@ impl std::error::Error for RenderError {}
 
 pub type RenderResult<T> = Result<T, RenderError>;
 
-/// Abstract renderer interface. Implementations: D2DRenderer (Windows).
+/// Abstract renderer interface. Implementations: D2DRenderer (Windows), WgpuRenderer (cross-platform).
 pub trait Renderer {
     /// Resize the render target.
     fn resize(&mut self, width: u32, height: u32) -> RenderResult<()>;

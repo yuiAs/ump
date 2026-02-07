@@ -28,6 +28,7 @@ pub struct FontConfig {
 }
 
 impl FontConfig {
+    #[cfg(feature = "d2d")]
     pub fn family(&self) -> &str {
         "Consolas"
     }
